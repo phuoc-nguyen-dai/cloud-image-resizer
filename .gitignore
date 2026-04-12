@@ -1,0 +1,79 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cloud/deployment
+*.zip
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Node
+node_modules/
+
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.kubeconfig
+
+# Common secret file names
+secrets.*
+secret.*
+credentials.*
+credential.*
+
+# Service account and cloud auth artifacts
+*service-account*.json
+*service_account*.json
+*firebase-adminsdk*.json
+gcp-key*.json
+sa-key*.json
+key.json
+*key.json
+*.key.json
+
+# Local token/config files with sensitive data
+.npmrc
+.pypirc
+.netrc
+
+# Optional local cloud credential folders
+.aws/
+.azure/
+.gcp/
