@@ -40,6 +40,10 @@ override.tf.json
 
 # Node
 node_modules/
+docs/
+test/
+*.md
+.md
 
 # Secrets and credentials
 *.pem
