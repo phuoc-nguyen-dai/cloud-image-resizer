@@ -1,6 +1,10 @@
 [
   {
-    "origin": ["http://localhost:8080", "http://localhost:3000", "https://your-domain.com"],
+    "origin": [
+      "http://localhost:8080",
+      "http://localhost:3000",
+      "http://127.0.0.1:5500"
+    ],
     "method": ["PUT", "GET", "HEAD", "OPTIONS"],
     "responseHeader": ["Content-Type", "Content-Disposition", "x-goog-meta-*"],
     "maxAgeSeconds": 3600
