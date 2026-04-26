@@ -1,136 +1,17 @@
-<!-- frontend/index.html - Cập nhật với CSS mới -->
 <!doctype html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>☁️ Cloud Image Resizer Pro</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    
-    <link rel="stylesheet" href="css/style.css" />
+    <meta name="description" content="Upload và resize ảnh tự động với Google Cloud Storage. Hỗ trợ JPEG, PNG, WebP, GIF — tối đa 10MB." />
+    <meta property="og:title" content="Cloud Image Resizer" />
+    <meta property="og:description" content="Upload, resize và chia sẻ ảnh với Google Cloud." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Cloud Image Resizer</title>
   </head>
   <body>
-    <main class="container">
-      <!-- Header -->
-      <div class="header-section">
-        <div class="header-icon">☁️</div>
-        <div class="header-title">
-          <h1>Cloud Image Resizer</h1>
-          <p class="header-subtitle">Upload, Resize & Share - Powered by Google Cloud</p>
-        </div>
-      </div>
-
-      <!-- Stats -->
-      <!-- <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">📊</div>
-          <div class="stat-value" id="total-uploads">0</div>
-          <div class="stat-label">Tổng uploads</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">⚡</div>
-          <div class="stat-value" id="avg-size">0s</div>
-          <div class="stat-label">Thời gian TB</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">✨</div>
-          <div class="stat-value" id="success-rate">100%</div>
-          <div class="stat-label">Tỉ lệ thành công</div>
-        </div>
-      </div> -->
-
-      <!-- Upload Form -->
-      <form id="upload-form" class="upload-card">
-        <div class="upload-area" id="drop-zone">
-          <div class="upload-icon">📸</div>
-          <h3 class="upload-title">Kéo thả ảnh vào đây</h3>
-          <p class="upload-subtitle">hoặc click để chọn file</p>
-          <input id="image" name="image" type="file" accept="image/*" />
-          <button type="button" class="btn btn-primary" onclick="document.getElementById('image').click()">
-            <span>📁</span> Chọn ảnh
-          </button>
-          <div class="file-info" style="margin-top: 16px; color: var(--text-secondary); font-size: 0.875rem;">
-            Hỗ trợ: JPEG, PNG, WebP, GIF (tối đa 10MB)
-          </div>
-        </div>
-        
-        <!-- File Preview -->
-        <div class="preview-container" id="preview-container">
-          <div class="preview-content">
-            <img id="preview-image" class="preview-image" alt="Preview" />
-            <div class="preview-info">
-              <div class="preview-filename" id="file-name"></div>
-              <div class="preview-filesize" id="file-size"></div>
-            </div>
-            <button type="button" class="btn btn-secondary" onclick="clearFile()">
-              <span>✕</span> Hủy
-            </button>
-          </div>
-        </div>
-        
-        <!-- Progress Bar -->
-        <div class="progress-container" id="progress-container">
-          <div class="progress-header">
-            <span id="progress-status">Đang upload...</span>
-            <span id="progress-percent">0%</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" id="progress-fill"></div>
-          </div>
-        </div>
-        
-        <button type="submit" id="upload-btn" class="btn btn-primary" style="width: 100%; margin-top: 24px;">
-          <span>⬆️</span> Upload & Resize
-        </button>
-      </form>
-
-      <!-- Status -->
-      <div id="status-container" style="margin: 20px 0;"></div>
-
-      <!-- Results Gallery -->
-      <div id="results-container"></div>
-    </main>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-      <span class="toast-icon" id="toast-icon"></span>
-      <span class="toast-message" id="toast-message"></span>
-      <span class="toast-close" onclick="this.parentElement.classList.remove('show')">✕</span>
-    </div>
-
-    <!-- Lightbox -->
-    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
-      <span class="lightbox-close" onclick="closeLightbox()">✕</span>
-      <div class="lightbox-content">
-        <img id="lightbox-image" class="lightbox-image" alt="Lightbox" />
-      </div>
-    </div>
-
-    <script src="js/config.js"></script>
-    <script src="js/app.js"></script>
-    
-    <script>
-      // Lightbox functions
-      function openLightbox(url) {
-        document.getElementById('lightbox-image').src = url;
-        document.getElementById('lightbox').classList.add('active');
-      }
-      
-      function closeLightbox() {
-        document.getElementById('lightbox').classList.remove('active');
-      }
-      
-      // Clear file function
-      function clearFile() {
-        // Implemented in app.js
-        if (typeof window.clearFileHandler === 'function') {
-          window.clearFileHandler();
-        }
-      }
-    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

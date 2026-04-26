@@ -21,6 +21,7 @@ dist/
 # IDE
 .vscode/
 .idea/
+.agent/
 
 # OS
 .DS_Store
@@ -42,8 +43,6 @@ override.tf.json
 node_modules/
 docs/
 test/
-*.md
-.md
 
 # Secrets and credentials
 *.pem
