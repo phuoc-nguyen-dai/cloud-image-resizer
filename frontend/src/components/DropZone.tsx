@@ -82,7 +82,6 @@ export function DropZone({ file, preview, state, onSelect, onClear, onUpload }: 
                 <span className={styles.formatTag}>PNG</span>
                 <span className={styles.formatTag}>WebP</span>
                 <span className={styles.formatTag}>GIF</span>
-                <span className={styles.formatNote}>tối đa 10MB</span>
               </div>
             </motion.div>
           ) : (
