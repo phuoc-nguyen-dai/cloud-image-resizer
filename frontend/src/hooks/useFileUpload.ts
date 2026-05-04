@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from "react";
-import { CONFIG } from "../config";
+import { useState, useCallback } from "react";
+import { CONFIG, MODE } from "../config";
 
 export type UploadPhase =
   | "idle"
@@ -17,8 +17,6 @@ export interface UploadState {
   error: string | null;
 }
 
-const UUID_PREFIX_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i;
-
 function sanitize(filename: string): string {
   const ext = filename.split(".").pop() ?? "jpg";
   const name = filename
@@ -33,7 +31,8 @@ function sanitize(filename: string): string {
 
 function extractCleanName(objectName: string): string {
   const filename = (objectName ?? "").split("/").pop() ?? "";
-  return filename.replace(/\.[^/.]+$/, "");
+  const noUuid = filename.replace(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i, "");
+  return noUuid.replace(/\.[^/.]+$/, "");
 }
 
 function validate(file: File): void {
@@ -75,28 +74,57 @@ export interface ResizedResult {
   processedAt: string;
 }
 
-async function pollImage(
+async function pollMetadata(
   url: string,
   maxAttempts: number,
   onAttempt: (i: number) => void
-): Promise<void> {
+): Promise<Record<string, string>> {
+  console.log("Polling metadata...");
   for (let i = 0; i < maxAttempts; i++) {
     onAttempt(i);
     try {
-      const cacheBusterUrl = `${url}?t=${Date.now()}`;
-      const res = await fetch(cacheBusterUrl, { 
-        method: "HEAD",
-        cache: "no-store" 
-      });
+      const res = await fetch(`${url}?t=${Date.now()}`, { method: "GET", cache: "no-store" });
       if (res.ok) {
-        return;
+        const metadata = await res.json();
+        if (metadata?.status === "done" && metadata?.sizes) {
+          console.log("Metadata found");
+          return metadata.sizes as Record<string, string>;
+        }
+        if (metadata?.status === "failed") {
+          throw new Error("Cloud resize failed");
+        }
       }
     } catch {
       // not ready yet
     }
     await new Promise((r) => setTimeout(r, CONFIG.POLLING_INTERVAL));
   }
-  throw new Error("Timeout — ảnh chưa được xử lý sau 60 giây");
+  throw new Error("Timeout — ảnh chưa được xử lý sau 20 giây");
+}
+
+function normalizeLocalSizes(sizes: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(sizes).map(([size, value]) => [size, value.startsWith("data:") ? value : `data:image/jpeg;base64,${value}`])
+  );
+}
+
+function localFileUpload(file: File): Promise<ResizedResult> {
+  const form = new FormData();
+  form.append("file", file);
+
+  return fetch(CONFIG.LOCAL_API_URL, {
+    method: "POST",
+    body: form,
+  }).then(async (res) => {
+    if (!res.ok) {
+      throw new Error((await res.text()) || "Không resize được ảnh ở local mode");
+    }
+    const data = await res.json();
+    return {
+      sizes: normalizeLocalSizes(data.sizes || {}),
+      processedAt: new Date().toISOString(),
+    };
+  });
 }
 
 export function useFileUpload() {
@@ -109,7 +137,6 @@ export function useFileUpload() {
     error: null,
   });
   const [result, setResult] = useState<ResizedResult | null>(null);
-  const abortRef = useRef(false);
 
   const set = useCallback((patch: Partial<UploadState>) => {
     setState((s) => ({ ...s, ...patch }));
@@ -139,10 +166,19 @@ export function useFileUpload() {
 
   const upload = useCallback(async () => {
     if (!file) return;
-    abortRef.current = false;
     setResult(null);
 
     try {
+      if (MODE === "local") {
+        console.log("Running in LOCAL mode");
+        set({ phase: "processing", progress: 35, statusText: "Đang resize ảnh ở local...", error: null });
+        const localResult = await localFileUpload(file);
+        setResult(localResult);
+        set({ phase: "done", progress: 100, statusText: "Hoàn thành!" });
+        return;
+      }
+
+      console.log("Running in CLOUD mode");
       set({ phase: "requesting-url", progress: 5, statusText: "Đang tạo upload URL...", error: null });
 
       const sanitizedName = sanitize(file.name);
@@ -151,10 +187,11 @@ export function useFileUpload() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filename: sanitizedName, contentType: file.type || "image/jpeg" }),
       });
-      if (!res.ok) throw new Error(await res.text() || "Không lấy được signed URL");
+      if (!res.ok) throw new Error((await res.text()) || "Không lấy được signed URL");
       const data = await res.json();
 
-      set({ phase: "uploading", progress: 10, statusText: "Đang upload ảnh..." });
+      set({ phase: "uploading", progress: 10, statusText: "Uploading to GCS..." });
+      console.log("Uploading to GCS...");
 
       await uploadXHR(data.uploadUrl, file, file.type || "image/jpeg", (pct, loaded, total) => {
         set({
@@ -171,28 +208,25 @@ export function useFileUpload() {
           : `https://storage.googleapis.com/${data.resizedBucket || data.uploadBucket}`;
 
       const cleanName = extractCleanName(data.objectName);
-
-      const sizes: Record<string, string> = {
-        "320": `${bucketUrl}/resized/${cleanName}_thumbnail.jpg`,
-        "640": `${bucketUrl}/resized/${cleanName}_medium.jpg`,
-        "1024": `${bucketUrl}/resized/${cleanName}_large.jpg`,
-      };
+      const metadataUrl = `${bucketUrl}/resized/metadata/${cleanName}.json`;
 
       try {
-        await pollImage(sizes["1024"], CONFIG.MAX_POLLING_ATTEMPTS, (i) => {
-          set({ progress: 82 + Math.min(i, 15), statusText: `Đang xử lý... (${i + 1}/${CONFIG.MAX_POLLING_ATTEMPTS})` });
+        const cloudSizes = await pollMetadata(metadataUrl, CONFIG.MAX_POLLING_ATTEMPTS, (i) => {
+          set({
+            progress: 82 + Math.min(i, 15),
+            statusText: `Polling metadata... (${i + 1}/${CONFIG.MAX_POLLING_ATTEMPTS})`,
+          });
         });
+        setResult({ sizes: cloudSizes, processedAt: new Date().toISOString() });
       } catch {
         throw new Error("Timeout — không nhận được kết quả resize");
       }
 
-      setResult({ sizes, processedAt: new Date().toISOString() });
+      console.log("Resize complete");
       set({ phase: "done", progress: 100, statusText: "Hoàn thành!" });
     } catch (err) {
-      if (!abortRef.current) {
-        const msg = (err as Error).message || "Có lỗi xảy ra";
-        set({ phase: "error", error: msg, progress: 0, statusText: "" });
-      }
+      const msg = (err as Error).message || "Có lỗi xảy ra";
+      set({ phase: "error", error: msg, progress: 0, statusText: "" });
     }
   }, [file, set]);
 

@@ -22,7 +22,8 @@ export default function App() {
               <h1 className={styles.panelTitle}>Upload ảnh</h1>
               <p className={styles.panelSub}>
                 Resize tự động thành{" "}
-                <span className={styles.highlight}>640px</span> và{" "}
+                <span className={styles.highlight}>320px</span>-
+                <span className={styles.highlight}>640px</span>-
                 <span className={styles.highlight}>1024px</span> trên Google Cloud
               </p>
             </div>
