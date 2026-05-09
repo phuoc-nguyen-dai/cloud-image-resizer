@@ -69,6 +69,8 @@ def _generate_upload_signed_url(blob: storage.Blob, content_type: str) -> str:
 def health():
     return {"status": "ok"}
 
+# route nhận rq ở fe
+
 
 @app.post("/api/signed-url")
 def create_signed_url():

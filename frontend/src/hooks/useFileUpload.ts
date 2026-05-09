@@ -189,7 +189,7 @@ export function useFileUpload() {
                 statusText: "Đang tạo upload URL...",
                 error: null,
             });
-
+            //fe gửi rq đến be 
             const sanitizedName = sanitize(file.name);
             const res = await fetch(CONFIG.API_URL, {
                 method: "POST",
